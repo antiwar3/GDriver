@@ -11,7 +11,7 @@ _NtOpenProcess pNtOpenProcess = NULL;
 _NtTerminateProcess pNtTerminateProcess = NULL;
 _NtDuplicateObject pNtDuplicateObject = NULL;
 _NtQueryObject pNtQueryObject = NULL;
-_NtClose pNtClose = NULL;;
+_NtClose pNtClose = NULL;
 
 PSERVICE_DESCRIPTOR_TABLE KeServiceDescriptorTable = NULL;
 PSYSTEM_SERVICE_TABLE g_pSSDT = NULL;
