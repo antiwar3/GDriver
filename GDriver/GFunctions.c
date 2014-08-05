@@ -108,7 +108,7 @@ NTSTATUS UserRequest_GetOpenFileHandleName(PIRP Irp, ULONG *written)
 	file = dcd->address;
 	inout = (FILE_INFO*)Irp->AssociatedIrp.SystemBuffer;
 
-	if (file < 0xFFFFFF0000000000)
+	if ((ULONG_PTR)file < 0xFFFFFF0000000000)
 		return STATUS_UNSUCCESSFUL;
 
 	if (!IsValidAddress(file, sizeof(FILE_OBJECT)) ||

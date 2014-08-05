@@ -103,17 +103,14 @@ NTSTATUS NTAPI hkNtTerminateProcess(HANDLE handle, NTSTATUS exitcode)
 
 VOID CreateProcessNotifyEx(__inout PEPROCESS Process, __in HANDLE ProcessId, __in_opt PPS_CREATE_NOTIFY_INFO CreateInfo)
 {
-	PUNICODE_STRING ProcName = NULL;
 	if (CreateInfo) {
-		DbgPrint("GDriver: NOTIFY[Process %s (%04d) was created]", GetProcessNameByProcessId(ProcessId), ProcessId);
+		DbgPrint("GDriver: NOTIFY[Process %s (%04d) was created]", GetProcessNameByProcessId((ULONG)ProcessId), ProcessId);
 		//CreateInfo->CreationStatus = STATUS_UNSUCCESSFUL;
 	}
 	else {
-		DbgPrint("GDriver: NOTIFY[Process %s [%04d] was terminated]", GetProcessNameByProcessId(ProcessId), ProcessId);
+		DbgPrint("GDriver: NOTIFY[Process %s [%04d] was terminated]", GetProcessNameByProcessId((ULONG)ProcessId), ProcessId);
 	}
 }
-
-
 
 NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {

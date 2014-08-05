@@ -221,7 +221,7 @@ CHAR *GetProcessNameByProcessId(ULONG process_id)
 
 VOID UnlinkProcess(ULONG process_id)
 {
-	PEPROCESS *ep = LookupProcess(process_id);
+	PEPROCESS ep = LookupProcess(process_id);
 	if (ep) {
 		PLIST_ENTRY cur = (PLIST_ENTRY)((ULONG_PTR)ep + 0x188);
 		PLIST_ENTRY prev = cur->Blink;
