@@ -85,8 +85,6 @@ NTSTATUS UserRequest_ProtectProcess(PIRP Irp, ULONG *written)
 
 NTSTATUS UserRequest_GetOpenFileHandleName(PIRP Irp, ULONG *written)
 {
-	//KIRQL irql = WPOFFx64(); //Raise IRQL to DISPATCH_LEVEL (DPC)
-
 	FILE_OBJECT *file = NULL;
 	PIO_STACK_LOCATION pIoStackLocation = NULL;
 	FILE_INFO *inout = NULL;
@@ -134,7 +132,16 @@ NTSTATUS UserRequest_GetOpenFileHandleName(PIRP Irp, ULONG *written)
 	
 	*written = sizeof(FILE_INFO);
 
-	//WPONx64(irql);
-
 	return STATUS_SUCCESS;
+}
+
+VOID ProcessCreationNotify(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
+{
+	if (CreateInfo) {
+		DbgPrint("GDriver: NOTIFY[Process %s (%04d) was created]", GetProcessNameByProcessId((ULONG)ProcessId), ProcessId);
+		//CreateInfo->CreationStatus = STATUS_UNSUCCESSFUL;
+	}
+	else {
+		DbgPrint("GDriver: NOTIFY[Process %s [%04d] was terminated]", GetProcessNameByProcessId((ULONG)ProcessId), ProcessId);
+	}
 }

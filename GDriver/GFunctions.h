@@ -22,5 +22,6 @@ NTSTATUS UserRequest_ProtectProcess(PIRP Irp, ULONG *written);
 
 NTSTATUS UserRequest_GetOpenFileHandleName(PIRP Irp, ULONG *written);
 
+VOID ProcessCreationNotify(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo);
 
 #endif

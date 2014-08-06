@@ -17,19 +17,21 @@ PSERVICE_DESCRIPTOR_TABLE KeServiceDescriptorTable = NULL;
 PSYSTEM_SERVICE_TABLE g_pSSDT = NULL;
 PSYSTEM_SERVICE_TABLE g_pSSDTS = NULL;
 
-VOID CreateProcessNotifyEx(__inout PEPROCESS Process, __in HANDLE ProcessId, __in_opt PPS_CREATE_NOTIFY_INFO CreateInfo);
 
 VOID UnloadDriver(IN PDRIVER_OBJECT DriverObject)
 {
 	NTSTATUS status = STATUS_SUCCESS;
 
-	PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)CreateProcessNotifyEx, TRUE);
+	if(NT_SUCCESS(PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)ProcessCreationNotify, TRUE)))
+		DbgPrint("GDriver: Custom CreateProcessNotify routine was removed.");
+	else
+		DbgPrint("GDriver: Unable to remove custom CreateProcessNotify routine.");
 
 	UNICODE_STRING name_dos;
 	RtlInitUnicodeString(&name_dos, dosDeviceName);
 
 	status = IoDeleteSymbolicLink(&name_dos);
-	if (status != STATUS_SUCCESS) 
+	if (NT_SUCCESS(status))
 		DbgPrint("GDriver: IoDeleteSymbolicLink has failed.");
 
 	IoDeleteDevice(DriverObject->DeviceObject);
@@ -101,17 +103,6 @@ NTSTATUS NTAPI hkNtTerminateProcess(HANDLE handle, NTSTATUS exitcode)
 	return pNtTerminateProcess(handle, exitcode);
 }
 
-VOID CreateProcessNotifyEx(__inout PEPROCESS Process, __in HANDLE ProcessId, __in_opt PPS_CREATE_NOTIFY_INFO CreateInfo)
-{
-	if (CreateInfo) {
-		DbgPrint("GDriver: NOTIFY[Process %s (%04d) was created]", GetProcessNameByProcessId((ULONG)ProcessId), ProcessId);
-		//CreateInfo->CreationStatus = STATUS_UNSUCCESSFUL;
-	}
-	else {
-		DbgPrint("GDriver: NOTIFY[Process %s [%04d] was terminated]", GetProcessNameByProcessId((ULONG)ProcessId), ProcessId);
-	}
-}
-
 NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
 	UNICODE_STRING  name_nt, name_dos;
@@ -124,16 +115,16 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	DbgPrint("GDriver: starting.");
 
 	ntStatus = IoCreateDevice(DriverObject, 0, &name_nt, FILE_DEVICE_UNKNOWN, 0, FALSE, &pDeviceObject);
-	if (ntStatus != STATUS_SUCCESS) {
+	if (!NT_SUCCESS(ntStatus)) {
 		DbgPrint("GDriver: IoCreateDevice has failed.");
 		return ntStatus;
 	}
 
-	if (IoDeleteSymbolicLink(&name_dos) == STATUS_SUCCESS) 
+	if (NT_SUCCESS(IoDeleteSymbolicLink(&name_dos)))
 		DbgPrint("GDriver: Previous or old symbolic link was deleted.");
 	
 	ntStatus = IoCreateSymbolicLink(&name_dos, &name_nt);
-	if (ntStatus != STATUS_SUCCESS) {
+	if (!NT_SUCCESS(ntStatus)) {
 		DbgPrint("GDriver: IoCreateSymbolicLink has failed.");
 		IoDeleteDevice(DriverObject->DeviceObject);
 		return STATUS_UNSUCCESSFUL;
@@ -170,42 +161,10 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 
 	DbgPrint("GDriver: loaded.");
 
-	//KIRQL irql = WPOFFx64();
-	//DbgPrint("GDriver: In DISPATCH_LEVEL");
-	//WPONx64(irql);
-
-	NTSTATUS lol = PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)CreateProcessNotifyEx, FALSE);
-	DbgPrint("kk %x", lol);
-	//try {
-	//	PEPROCESS *ep = LookupProcess(948);
-
-	//	if (ep) {
-
-	//		PLIST_ENTRY cur = (PLIST_ENTRY)((ULONG_PTR)ep + 0x188);
-	//		PLIST_ENTRY prev = cur->Blink;
-	//		PLIST_ENTRY next = cur->Flink;
-
-	//		prev->Flink = cur->Flink;
-	//		next->Blink = cur->Blink;
-
-	//		cur->Flink = cur;
-	//		cur->Blink = cur;
-	//	}
-
-	//	/*do {
-	//		CHAR *name = (char*)ep + 0x2E0;
-	//		PLIST_ENTRY list = (PLIST_ENTRY)((ULONG_PTR)ep + 0x188);
-
-	//		name = (char*)ep + 0x2E0;
-	//		DbgPrint("%s", name);
-
-	//		ep = (PEPROCESS)(((ULONG_PTR)list->Flink) - 0x188);
-	//	} while (ep != PsGetCurrentProcess());*/
-	//}
-	//except(1)
-	//{
-
-	//}
+	if (NT_SUCCESS(PsSetCreateProcessNotifyRoutineEx(ProcessCreationNotify, FALSE)))
+		DbgPrint("GDriver: CreateProcessNotify routine was set.");
+	else
+		DbgPrint("GDriver: Unable to set CreateProcessNotify routine.");
 
 	return STATUS_SUCCESS;
 }
