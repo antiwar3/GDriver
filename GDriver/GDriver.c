@@ -22,7 +22,7 @@ VOID UnloadDriver(IN PDRIVER_OBJECT DriverObject)
 {
 	NTSTATUS status = STATUS_SUCCESS;
 
-	if(NT_SUCCESS(PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)ProcessCreationNotify, TRUE)))
+	if (PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)ProcessCreationNotify, TRUE) == STATUS_SUCCESS)
 		DbgPrint("GDriver: Custom CreateProcessNotify routine was removed.");
 	else
 		DbgPrint("GDriver: Unable to remove custom CreateProcessNotify routine.");
@@ -31,7 +31,7 @@ VOID UnloadDriver(IN PDRIVER_OBJECT DriverObject)
 	RtlInitUnicodeString(&name_dos, dosDeviceName);
 
 	status = IoDeleteSymbolicLink(&name_dos);
-	if (NT_SUCCESS(status))
+	if (status != STATUS_SUCCESS)
 		DbgPrint("GDriver: IoDeleteSymbolicLink has failed.");
 
 	IoDeleteDevice(DriverObject->DeviceObject);
@@ -115,7 +115,7 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	DbgPrint("GDriver: starting.");
 
 	ntStatus = IoCreateDevice(DriverObject, 0, &name_nt, FILE_DEVICE_UNKNOWN, 0, FALSE, &pDeviceObject);
-	if (!NT_SUCCESS(ntStatus)) {
+	if (ntStatus != STATUS_SUCCESS) {
 		DbgPrint("GDriver: IoCreateDevice has failed.");
 		return ntStatus;
 	}
@@ -124,7 +124,7 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 		DbgPrint("GDriver: Previous or old symbolic link was deleted.");
 	
 	ntStatus = IoCreateSymbolicLink(&name_dos, &name_nt);
-	if (!NT_SUCCESS(ntStatus)) {
+	if (ntStatus != STATUS_SUCCESS) {
 		DbgPrint("GDriver: IoCreateSymbolicLink has failed.");
 		IoDeleteDevice(DriverObject->DeviceObject);
 		return STATUS_UNSUCCESSFUL;
@@ -161,7 +161,7 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 
 	DbgPrint("GDriver: loaded.");
 
-	if (NT_SUCCESS(PsSetCreateProcessNotifyRoutineEx(ProcessCreationNotify, FALSE)))
+	if (PsSetCreateProcessNotifyRoutineEx(ProcessCreationNotify, FALSE) == STATUS_SUCCESS)
 		DbgPrint("GDriver: CreateProcessNotify routine was set.");
 	else
 		DbgPrint("GDriver: Unable to set CreateProcessNotify routine.");
